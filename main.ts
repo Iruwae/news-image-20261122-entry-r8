@@ -1,12 +1,12 @@
-import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { existsSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, statSync } from "node:fs";
 
-// Run the drawer next to this file (never via process.cwd(): the grader
-// runs main.ts from an unrelated cwd with a read-only /bot).
-const drawScript = fileURLToPath(new URL("./draw.py", import.meta.url));
+// The image is pre-rendered and committed at out/entry.png. The grader
+// sandbox is standard-library only (no Pillow, no network), so this entry
+// point only copies the committed image to the output directory — never via
+// process.cwd(): the grader runs main.ts from an unrelated cwd.
+const src = new URL("./out/entry.png", import.meta.url);
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-execFileSync("python3", [drawScript, outDir], { stdio: "inherit" });
-const outFile = `${outDir}/entry.png`;
-if (!existsSync(outFile)) throw new Error(`draw.py did not produce ${outFile}`);
-console.log(`entry.png: ${statSync(outFile).size} bytes`);
+const dest = `${outDir}/entry.png`;
+copyFileSync(src, dest);
+if (!existsSync(dest)) throw new Error(`copy failed: ${dest} missing`);
+console.log(`entry.png: ${statSync(dest).size} bytes`);
